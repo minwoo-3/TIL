@@ -1,7 +1,7 @@
 # HTTP
 ## HTTP란?
 HTTP란 HyperText Transfer Protocol의 약자로<br> HTML 문서를공유하기 위한 약속(규칙)이다
-## HTTP와 HTTS의 차이점
+## HTTP와 HTTPS의 차이점
 HTTPS는 HTTP에 TLS라는 암호화 프로토콜을 통해<br> 안정성을 확보한 것이다
 ### HTTPS 작동 방식
 * 사용자가 URL을 주소창에 적는다
