@@ -313,4 +313,97 @@ public class 클래스명 extends 부모클래스명
     - 자신과 같은 패키지만 접근 가능
 
 ## 추상클래스
+- 구체적이지 않는 클래스를 의미
+- `abstract`를 클래스 앞에 써서 정의한다
+- 미완성 추상 메서드를 넣을 수 있다
+    - 추상 메서드 : 내용이 구현 되지 않은 메서드
+- 객체를 생성 할 수 없다
+- 상속받는 클래스가 추상 메서드를 구현한다
 
+## super와 부모생성자
+#### 부모 생성자
+- 클래스가 인스턴스화 될때 생성자의 부모 생성자부터 실행된다
+
+#### super
+- 부모를 가르키는 키워드
+    - this는 자신을 나타낸다
+- 생성자의 부모 클래스가 기본 생성자가 아닌 경우 super()로 인수를 입력해야한다
+
+## 오버라이딩
+- 부모클래스의 메서드를 자식 클래스에서 재정의하여 사용하는 것
+- 부모 클래스의 메서드가 사라지진 않는다
+    - `super()`를 사용하면 부모 메서드도 호출 가능 하다
+```
+ public class Bus extends Car{
+        public void run(){
+            **super.run();**  // 부모의  run()메소드를 호출 
+            System.out.println("Bus의 run메소드");
+        }
+    }
+```
+
+## 클래스 형변환
+- 부모타입으로 자식 객체를 참조 할 수는 있으나 부모의 메서드만 사용 가능하다
+```
+public class BusExam{
+        public static void main(String args[]){
+            Car car = new Bus();
+            car.run();
+            //car.ppangppang(); // 컴파일 오류 발생
+
+            Bus bus = (Bus)car;  //부모타입을 자식타입으로 형변환 
+            bus.run();
+            bus.ppangppang();
+        }
+    }
+```
+- 하지만 위와 같이 형 변환을 하면 자식 클래스의 메서드도 사용 할 수 있게 된다
+
+## 인터페이스
+- 인터페이스 : 서로 관계가 없는 물체들이 상호작용하기 위해 사용하는 장치나 시스템
+    - 어떤 기능을 가질지 정의만 한다
+    - 추상 메서드와 상수를 정의 할 수 있다
+```
+public interface TV{
+        public int MAX_VOLUME = 100;
+        public int MIN_VOLUME = 0;
+
+        public void turnOn();
+        public void turnOff();
+        public void changeVolume(int volume);
+        public void changeChannel(int channel);
+    }
+```
+- 인터페이스를 구현하는 클래스에서 `implements` 키워드 사용한다
+- 인터페이스의 메서드를 하나라도 구현하지 않으면 추상클래스가 된다
+- 참조변수의 타입으로는 인터페이스를 사용할 수 있고 인터페이스가 가지고 있는 메서드만 사용할 수 있다
+
+#### default method
+- `default`키워드로 선언하면 인터페이스에서도 메서드를 구현 할 수 있다
+- default메서드도 오버라이딩 할 수 있다
+
+## 내부 클래스
+- 클래스 안에 클래스
+
+#### 내부 클래스 형태
+- 중첩클래스(인스턴스 클래스) : 클래스 안에 인스턴스 변수
+- static 클래스 : 내부 클래스가 static으로 정의된 경우
+- 지역 (중첩) 클래스 : 메서드 안에 클래스를 선언한 경우
+- 익명 (중첩) 클래스 : 생성자 다음에 중괄호로 열고 닫아 클래스를 상속받는 이름 없는 객체를 만드는 경우
+
+## 예외 처리
+
+### 예외 처리 문법
+- try : 수행할 코드 예외 발생 가능성이 있는 블록
+- catch : 예외 처리 블록
+- finally : 무조건 실행되는 블록
+
+### Throws
+- 예외를 호출한 쪽에서 처리하도록 넘긴다
+- Exception을 발생 시킬 수도 있다
+
+### 사용자 정의 Exception
+- checked Exception : Exception 클래스를 상속 받아 정의
+    - 반드시 오류를 처리 해야하는 Exception
+- unChecked Excoption : RuntimeException 클래스를 상속 받아 정의
+    - 예외 처리 하지 않아도 커파일 오류 안일어남
