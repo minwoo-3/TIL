@@ -1,4 +1,4 @@
-## Spring MVC
+# Spring MVC
 - Spring Framework에서 웹 앱을 위해 제공되는 서블릿 API기만 프레임워크
 #### Servlet(서블릿)
 - 클라이언트의 요청을 특정 규약(약속)에 맞춰서 Java코드로 작성하는 클래스 파일
