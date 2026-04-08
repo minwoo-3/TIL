@@ -1,4 +1,4 @@
-## DBMS
+# DBMS
 - DataBase Management System의 약자로 데이터베이스를 조작하는 소프트웨어이다
 - 응용 프로그램들이 데이터베이스를 공유하며 사용하는 환경을 제공한다
 
