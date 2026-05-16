@@ -75,3 +75,174 @@ List<Member> result = em.createQuery(cq).getResultList();
 - SQL/JPQL을 문자열이 아닌 자바코드로 쓰게 해줌
 
 ## 1차 캐시
+- 영속성 컨텍스트(엔티티 객체를 관리해주는 공간) 내부에 존재
+- DB에서 가져온 객체를 잠깐 보관해두는 곳
+- 트랜잭션이 끝나면 1차 캐시 사라짐
+- 1차 캐시에 객체가 있으면 굳이 DB에 접근하지 않아도 돼서 편리함
+
+## 2차 캐시
+- 자주 쓰는 객체를 저장해서 DB 접근을 크게 줄이는거
+- 복제본을 반환해준다
+- 앱 전체가 범위여서 트랜잭션이 끝나도 사라지지 않는다
+
+## 프록시
+- JPA와 Hibernate에서 사용되는 진짜 객체 대신 동작하는 가짜 객체
+### 특징
+- ### 데이터베이스 조회 지연: 
+  - 데이터베이스의 조회를 미루도 프록시 객체를 반환함
+- ### 프록시 객체의 구조:  
+  - 프록시 객체는 엔티티 클래스를 상속받고 실제 엔티티 객체를 참조한다
+- ### 프록시 객체의 초기화: 
+  - 프록시 객체는 처음 사용할 때 한 번만 초기화 프록시 객체는 실제 엔티티 객체의 데이터에 접근할 수 있게 된다
+- ### 프록시와 타입 비교: 
+  - 프록시 객체는 실제 엔티티와 동일한 인터페이스를 구현 하기 때문에 타입을 비교 할 때 instanceof 연산자를 사용한다
+- ### 영속성 컨텍스트와 프록시:
+  - 영속성 컨텍스트에 이미 엔티티가 있으면 `em.getReference()`는 프록시가 아닌 실제 객체 반환
+  - 준영속 상태(살아는 있지만 JPA에서 관리하지 않는 상태)에서 프록시를 초기화 하면 예외 발생
+
+## LAZY 로딩과 프록시
+- 프록시 생성:
+  - LAZY(필요할때 연관 객체를 가져오는 것)로 연관관계가 설정되는 실제 엔티티가 아닌 프록시 객체로 로드된다
+- 예시:
+```
+@Entity
+public class Member {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    private Team team;
+
+    // getters and setters
+}
+
+@Entity
+public class Team {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy = "team")
+    private List<Member> members = new ArrayList<>();
+
+    // getters and setters
+}
+```
+- Member 엔티티 로드될때 team은 프록시 객체로 로드
+```
+EntityManager em = emf.createEntityManager();
+EntityTransaction tx = em.getTransaction();
+tx.begin();
+
+Member member = em.find(Member.class, memberId);
+Team team = member.getTeam(); // 이 시점에는 프록시 객체가 로드됨
+String teamName = team.getName(); // 이 시점에 실제 DB 조회 발생
+
+tx.commit();
+em.close();
+```
+- 필요해져서 실제 DB 조회
+- 불필요한 조회를 줄여서 성능 향상
+
+## 프록시 초기화 확인
+- 초기화 확인 코드
+```
+PersistenceUnitUtil persistenceUnitUtil = emf.getPersistenceUnitUtil();
+boolean isInitialized = persistenceUnitUtil.isLoaded(member.getTeam());
+```
+- 강제 초기화
+```
+org.hibernate.Hibernate.initialize(member.getTeam());
+```
+
+## 프록시 객체의 작동 방식
+
+- 프록시 객체 생성:
+  - 연관관계 엔티티를 호출하면 처음엔 실제 엔티티가 아니라 프록시 객체가 반환
+  - 프록시 객체는 실제 데이터를 갖고 있지 않고 DB에서 데이터를 로드하는 로직만 포함
+
+- 초기화 전 상태:
+  - 프록시 객체는 이 시점에서 DB에 로드 안됨
+  - 프록시 객체는 DB 접근이 필요하기 전까지 로드 안됨
+
+- 실제 데이터 접근 시점:
+  - `.getName()`등을 호출하면 실제 데이터를 로드
+  - 이 시점에서 DB쿼리 실행 프록시 객체에 로드됨 ->`초기화`
+
+- 초기화 후 상태:
+  - 초기화 후엔 프록시 객체는 실제 데이터를 갖게 됨 이후 데이터 접근은 이미 로드된거 사용
+
+### 프록시와 즉시 로딩
+- 가급적 지연 로딩만 사용
+
+- #### 즉시 로딩(Eager Loading):
+  - 엔티티와 연관된 모든 데이터 즉시 싹 다 가져오기
+
+- #### 지연 로딩(Lazy Loading):
+  - 연관된 엔티티의 데이터를 실제 필요할때만 DB에서 가져오기
+
+## CASCADE(영속성 전이)
+- 특정 엔티티를 영속 상태로 만들 때 연관된 객체도 모두 영속 상태로 만들 때 사용하는 기능
+
+### 종류
+- <b>ALL</b> : 모든 영속성 전이 옵션을 적용
+
+- <b>PERSIST</b> : 영속 상태로 전이
+
+- <b>REMOVE</b> : 삭제 상태로 전이
+
+- <b>MERGE</b> : 병합 상태로 전이
+
+- <b>REFRESH</b> : 새로 고침 상태로 전이
+
+- <b>DETACH</b> : 준영속 상태로 전이
+
+## 고아 객체(Orphan Removal)
+- 부모 엔티티와 연관 관계가 끊어진 자식 엔티티 JPA가 자동으로 삭제하는 기능을 제공한다
+- `orphanRemoval = true` : 고아 객체 제거
+
+```
+@Entity
+class Parent {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Child> children = new ArrayList<>();
+
+    public void addChild(Child child) {
+        children.add(child);
+        child.setParent(this);
+    }
+
+    public void removeChild(Child child) {
+        children.remove(child);
+        child.setParent(null);
+    }
+
+    // getters and setters
+}
+
+@Entity
+class Child {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Parent parent;
+
+    // getters and setters
+}
+```
+- 부모 엔티티에서 자식 엔티티 끊어버리면 고아 객체로 감지돼서 삭제됨
